@@ -22,8 +22,3 @@ me@mypc:~/workspace/SerialPortIdentifier$ pip install tox
 ```shell
 me@mypc:~/workspace/SerialPortIdentifier$ tox
 ```
-### Build issue
-
-Windows vs Linux(default) see "serial.png;." vs "serial.png:." in [tox.ini](tox.ini)
-
-Any help in resolving this command line issue with pyinstaller is welcome. TY
