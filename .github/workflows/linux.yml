@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Check out repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v7
 
     - name: Set up Python3
       shell: bash
@@ -26,7 +26,7 @@ jobs:
     - name: Build SerialPortIdentifier
       run: tox
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v7
       with:
         name: SerialPortIdentifier
         path: dist/SerialPortIdentifier
