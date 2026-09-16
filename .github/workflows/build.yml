@@ -1,0 +1,38 @@
+name: Build SerialPortIdentifier
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python-version: ['3.13']
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v6
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install pip
+      run: |
+        python -m ensurepip --upgrade
+        pip --version
+
+    - name: Install dependencies
+      run: pip install tox
+
+    - name: Build SerialPortIdentifier
+      run: tox
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist-${{ matrix.os }}
+        path: dist/
+        if-no-files-found: error
