@@ -8,13 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            executable: SerialPortIdentifier
-          - os: windows-latest
-            platform: windows
-            executable: SerialPortIdentifier.exe
+        os: [ubuntu-latest, windows-latest]
         python-version: ['3.13']
 
     steps:
@@ -34,10 +28,11 @@ jobs:
     - name: Install dependencies
       run: pip install tox
 
-    - name: Build SerialPortIdentifier.exe
+    - name: Build SerialPortIdentifier
       run: tox
 
     - uses: actions/upload-artifact@v4
       with:
         name: dist-${{ matrix.os }}
         path: dist/
+        if-no-files-found: error
