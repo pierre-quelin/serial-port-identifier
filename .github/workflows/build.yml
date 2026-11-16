@@ -6,23 +6,117 @@ on:
   workflow_dispatch:
 
 jobs:
+  # One Linux executable per architecture, built on the oldest supported
+  # distribution: it runs on any distribution whose glibc is at least as recent.
+  build-linux:
+    runs-on: ${{ matrix.runner }}
+    container: python:3.13-trixie
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - arch: x64
+          runner: ubuntu-latest
+        - arch: arm64
+          runner: ubuntu-24.04-arm
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
+
+    - name: Install dependencies
+      run: python -m pip install -r requirements-build.txt
+
+    - name: Build SerialPortIdentifier
+      run: python build.py
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: linux-${{ matrix.arch }}
+        path: release/
+        if-no-files-found: error
+
+  # Checks that the Linux executable starts on each supported distribution.
+  # To support a new distribution, add an entry with its image, the
+  # architecture to test and the command installing xvfb-run.
+  test-linux:
+    needs: build-linux
+    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    container: ${{ matrix.image }}
+    env:
+      DEBIAN_FRONTEND: noninteractive
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - name: debian-13
+          image: debian:13
+          arch: x64
+          setup: apt-get update && apt-get install -y xvfb xauth
+        - name: ubuntu-26.04
+          image: ubuntu:26.04
+          arch: x64
+          setup: apt-get update && apt-get install -y xvfb xauth
+        - name: ubuntu-rolling
+          image: ubuntu:rolling
+          arch: x64
+          setup: apt-get update && apt-get install -y xvfb xauth
+        # Raspberry Pi OS (64-bit) is Debian 13 plus Raspberry Pi packages,
+        # and has no official container image.
+        - name: raspberry-pi-os
+          image: debian:13
+          arch: arm64
+          setup: apt-get update && apt-get install -y xvfb xauth
+        # - name: opensuse-tumbleweed
+        #   image: opensuse/tumbleweed
+        #   arch: x64
+        #   setup: zypper --non-interactive install xvfb-run tar gzip
+
+    name: test-linux (${{ matrix.name }}, ${{ matrix.arch }})
+
+    steps:
+    - name: Install test tools
+      run: ${{ matrix.setup }}
+
+    - uses: actions/download-artifact@v8
+      with:
+        name: linux-${{ matrix.arch }}
+
+    - name: Start SerialPortIdentifier
+      shell: bash
+      run: |
+        tar -xzf SerialPortIdentifier-*.tar.gz
+        set +e
+        timeout 10 xvfb-run -a ./SerialPortIdentifier
+        code=$?
+        # 124: still running when the timeout stopped it, so it started fine.
+        if [ "$code" -ne 124 ]; then
+          echo "::error::SerialPortIdentifier exited with code $code"
+          exit 1
+        fi
+
   build:
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        python-version: ['3.13']
+        include:
+        - os: windows-latest
+          target: windows-x64
+        # - os: macos-latest
+        #   target: macos-arm64
 
     steps:
     - name: Check out repository
       uses: actions/checkout@v5
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v6
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.13'
         cache: pip
         cache-dependency-path: requirements*.txt
 
@@ -34,6 +128,28 @@ jobs:
 
     - uses: actions/upload-artifact@v7
       with:
-        name: dist-${{ matrix.os }}
-        path: dist/
+        name: ${{ matrix.target }}
+        path: release/
         if-no-files-found: error
+
+  release:
+    needs: [test-linux, build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        path: assets
+        merge-multiple: true
+
+    - name: Create GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: >
+        gh release create "$GITHUB_REF_NAME" assets/*
+        --repo "$GITHUB_REPOSITORY"
+        --title "$GITHUB_REF_NAME"
+        --generate-notes
