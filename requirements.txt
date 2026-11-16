@@ -1,2 +1,1 @@
-pyserial >= 3.5.0
-pyinstaller >= 4.10
+pyserial >= 3.5

@@ -1,22 +1,17 @@
-import sys
+import os
 import subprocess
+import sys
 
-# Determines the separator based on the platform
-sep = ';' if sys.platform == 'win32' else ':'
-
-# Builds the PyInstaller command
 cmd = [
-    'pyinstaller',
+    sys.executable, '-m', 'PyInstaller',
     '--windowed',
     '--onefile',
-    f'--add-binary=serial.png{sep}.',
-    'SerialPortIdentifier.py'
+    f'--add-data=serial.png{os.pathsep}.',
+    '--icon=serial.png',
+    'SerialPortIdentifier.py',
 ]
 
-print(f"Plateforme: {sys.platform}")
-print(f"Séparateur: {sep}")
-print(f"Commande: {' '.join(cmd)}")
+print(f"Platform: {sys.platform}")
+print(f"Command: {' '.join(cmd)}")
 
-# Execute the command
-result = subprocess.run(cmd, check=True)
-sys.exit(result.returncode)
+subprocess.run(cmd, check=True)

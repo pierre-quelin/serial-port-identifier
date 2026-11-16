@@ -1,12 +1,16 @@
 name: Build SerialPortIdentifier
 
-on: [push]
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ['3.13']
@@ -19,19 +23,16 @@ jobs:
       uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
-
-    - name: Install pip
-      run: |
-        python -m ensurepip --upgrade
-        pip --version
+        cache: pip
+        cache-dependency-path: requirements*.txt
 
     - name: Install dependencies
-      run: pip install tox
+      run: python -m pip install -r requirements-build.txt
 
     - name: Build SerialPortIdentifier
-      run: tox
+      run: python build.py
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: dist-${{ matrix.os }}
         path: dist/
