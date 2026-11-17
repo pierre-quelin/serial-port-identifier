@@ -5,18 +5,20 @@ Program to easily list and physically identify all serial ports installed on a c
 
 * Build a loopback dongle with a basic DB9 connector and join only pins 2 (Rx) and 3 (Tx) together.
 ![DB9 loopback dongle: pins 2 (Rx) and 3 (Tx) connected](db9-loopback.svg)
-* Disconnect all serial port connectors from the PC.
+> [!TIP]
+> Disconnect all serial port connectors from the PC.
 * Connect your dongle alternately to all ports (built-in ports or USB-serial adapters).
-* The LED of the port the dongle is plugged into turns green ("Connected").
+* The LED of the port the dongle is plugged into turns 🟢 **Connected**.
 * Enjoy :wink:
 
 Port states:
 
-* **Connected** (green): the loopback dongle is detected.
-* **Not detected** (red): the port is free but nothing echoes back.
-* **Unavailable** (orange): the port cannot be opened, usually because another application uses it.
+* 🟢 **Connected**: the loopback dongle is detected.
+* 🔴 **Not detected**: the port is free but nothing echoes back.
+* 🟠 **Unavailable**: the port cannot be opened, usually because another application uses it.
 
-> **Warning:** the program periodically opens every serial port and writes a few random bytes to it.
+> [!WARNING]
+> The program periodically opens every serial port and writes a few random bytes to it.
 > DTR and RTS are kept low to avoid resetting boards such as Arduino, but avoid running it while
 > real equipment (modem, PLC, ...) is connected.
 
