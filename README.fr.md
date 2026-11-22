@@ -9,7 +9,7 @@ Programme permettant de répertorier facilement tous les ports série installés
 ![Dongle de bouclage DB9 : broches 2 (Rx) et 3 (Tx) reliées](db9-loopback.svg)
 * Branchez successivement votre dongle sur tous les ports (ports intégrés ou adaptateurs USB-série).
 * La LED du port auquel le dongle est branché devient 🟢 **Connecté**.
-* Amusez-vous bien :wink:
+* Enjoy :wink:
 
 États des ports :
 
